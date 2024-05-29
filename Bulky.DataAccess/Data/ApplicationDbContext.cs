@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BulkyBook.DataAccess.Data
 {
@@ -11,10 +12,13 @@ namespace BulkyBook.DataAccess.Data
         {
             
         }
-
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<Company> Companies { get; set; }
+        public DbSet<ShoppingCart> ShoppingCarts { get; set; }
+        public DbSet<OrderHeader> OrderHeaders { get; set; }
+        public DbSet<OrderDetail> OrderDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,7 +31,13 @@ namespace BulkyBook.DataAccess.Data
                 new Category { Id = 3, Name = "History", DisplayOrder = 3 }
                 );
 
-            modelBuilder.Entity<Product>().HasData(
+			modelBuilder.Entity<Company>().HasData(
+				new Company { Id = 1, Name = "Yes", StreetAddress = "123 Here", City = "Random", PostalCode = "I don't know", State = "FL", PhoneNumber = "1234567890" },
+				new Company { Id = 2, Name = "No", StreetAddress = "123 There", City = "Not Random", PostalCode = "I do know", State = "IL", PhoneNumber = "0987654321" },
+				new Company { Id = 3, Name = "Maybe", StreetAddress = "123 Nowhere", City = "Maybe Random", PostalCode = "I don't even know", State = "TX", PhoneNumber = "5432109876" }
+				);
+
+			modelBuilder.Entity<Product>().HasData(
                 new Product
                 {
                     Id = 1,

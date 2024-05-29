@@ -10,7 +10,7 @@ using System.Collections.Generic;
 namespace BulkyBookWeb.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = SD.Role_Admin)]
+    //[Authorize(Roles = SD.Role_Admin)]
     public class ProductController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -59,7 +59,7 @@ namespace BulkyBookWeb.Areas.Admin.Controllers
                 if(file != null)
                 {
                     string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                    string productPath = Path.Combine(wwwRootPath, @"images\product");
+                    string productPath = Path.Combine(wwwRootPath, @"s\product");
 
                     if (!string.IsNullOrEmpty(productVM.Product.ImageUrl))
                     {
