@@ -10,19 +10,19 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
+using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.Models;
+using BulkyBook.Utility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using BulkyBook.Utility;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using BulkyBook.DataAccess.Repository.IRepository;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 
 namespace BulkyBookWeb.Areas.Identity.Pages.Account
 {
@@ -47,8 +47,8 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
             IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _roleManager = roleManager;
-            _userManager = userManager;            
+            _roleManager=roleManager;
+            _userManager = userManager;
             _userStore = userStore;
             _emailStore = GetEmailStore();
             _signInManager = signInManager;
@@ -112,7 +112,7 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
 
             public string? Role { get; set; }
             [ValidateNever]
-            public IEnumerable<SelectListItem>RoleList { get; set; }
+            public IEnumerable<SelectListItem> RoleList { get; set; }
 
             [Required]
             public string Name { get; set; }
@@ -121,36 +121,27 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
             public string? State { get; set; }
             public string? PostalCode { get; set; }
             public string? PhoneNumber { get; set; }
-            public int? CompanyId {  get; set; }
-			[ValidateNever]
-			public IEnumerable<SelectListItem> CompanyList { get; set; }
+            public int? CompanyId { get; set; }
+            [ValidateNever]
+            public IEnumerable<SelectListItem> CompanyList { get; set; }
 
-
-		}
+        }
 
 
         public async Task OnGetAsync(string returnUrl = null)
         {
-            if(!_roleManager.RoleExistsAsync(SD.Role_Customer).GetAwaiter().GetResult())
-            {
-                _roleManager.CreateAsync(new IdentityRole(SD.Role_Customer)).GetAwaiter().GetResult();
-                _roleManager.CreateAsync(new IdentityRole(SD.Role_Employee)).GetAwaiter().GetResult();
-                _roleManager.CreateAsync(new IdentityRole(SD.Role_Admin)).GetAwaiter().GetResult();
-                _roleManager.CreateAsync(new IdentityRole(SD.Role_Company)).GetAwaiter().GetResult();
-            }
-            Input = new()
-            {
-                RoleList = _roleManager.Roles.Select(x => x.Name).Select(i => new SelectListItem
-                {
+           
+
+            Input = new() {
+                RoleList = _roleManager.Roles.Select(x => x.Name).Select(i => new SelectListItem {
                     Text = i,
                     Value = i
                 }),
-				CompanyList = _unitOfWork.Company.GetAll().Select(i => new SelectListItem
-				{
-					Text = i.Name,
-					Value = i.Id.ToString()
-				})
-			};
+                CompanyList = _unitOfWork.Company.GetAll().Select(i => new SelectListItem {
+                    Text = i.Name,
+                    Value = i.Id.ToString()
+                })
+            };
 
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
@@ -163,36 +154,31 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
-
+                
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 user.StreetAddress = Input.StreetAddress;
                 user.City = Input.City;
+                user.Name = Input.Name;
                 user.State = Input.State;
                 user.PostalCode = Input.PostalCode;
-                user.Name = Input.Name;
                 user.PhoneNumber = Input.PhoneNumber;
 
-                if(Input.Role==SD.Role_Company)
-                {
-                    user.CompanyId = Input.CompanyId;
+                if (Input.Role == SD.Role_Company) {
+                    user.CompanyId=Input.CompanyId;
                 }
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
-                if (result.Succeeded)
-                {
+                if (result.Succeeded) {
                     _logger.LogInformation("User created a new account with password.");
 
-                    if(!string.IsNullOrEmpty(Input.Role))
-                    {
+                    if (!String.IsNullOrEmpty(Input.Role)) {
                         await _userManager.AddToRoleAsync(user, Input.Role);
                     }
-                    else
-                    {
+                    else {
                         await _userManager.AddToRoleAsync(user, SD.Role_Customer);
                     }
-
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -212,7 +198,12 @@ namespace BulkyBookWeb.Areas.Identity.Pages.Account
                     }
                     else
                     {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        if (User.IsInRole(SD.Role_Admin)) {
+                            TempData["success"] = "New User Created Successfully";
+                        }
+                        else {
+                            await _signInManager.SignInAsync(user, isPersistent: false);
+                        }
                         return LocalRedirect(returnUrl);
                     }
                 }
